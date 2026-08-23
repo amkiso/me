@@ -24,11 +24,13 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.PORT }}
           script: |
+            set -e
             # 1. Di chuyển vào thư mục dự án trên VPS EC2
             cd ~/my-portfolio
 
-            # 2. Đồng bộ mã nguồn mới nhất từ nhánh main
-            git pull origin main
+            # 2. Đồng bộ mã nguồn mới nhất từ nhánh main (ép reset --hard để tránh xung đột với file dữ liệu trên VPS)
+            git fetch origin main
+            git reset --hard origin/main
 
             # 3. Build lại Docker images và khởi động các container ở chế độ background
             docker compose up -d --build
