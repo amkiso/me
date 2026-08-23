@@ -17,7 +17,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Serve uploads static folder
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+const uploadsStaticDir = fs.existsSync('/app/uploads')
+  ? '/app/uploads'
+  : path.resolve(__dirname, '..', '..', 'uploads');
+app.use('/uploads', express.static(uploadsStaticDir));
 
 // Trust proxy (behind Nginx)
 app.set('trust proxy', 1);

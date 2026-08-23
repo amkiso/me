@@ -491,15 +491,21 @@ async function openAssignmentViewer(subjectId, assignmentIdx, title, entryFile) 
   // Fetch list of files for Code Viewer
   try {
     const res = await fetch(`/api/assignments/${subjectId}/${assignmentIdx}/files`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const files = await res.json();
-    currentAssignmentViewerData = { subjectId, assignmentIdx, files };
+    currentAssignmentViewerData = { subjectId, assignmentIdx, files: files || [] };
 
-    renderCodeFileTabs(files);
-    if (files.length > 0) {
+    renderCodeFileTabs(files || []);
+    if (files && files.length > 0) {
       loadCodeFileContent(files[0].filename);
+    } else {
+      const codeBlock = document.getElementById('viewer-code-block');
+      if (codeBlock) codeBlock.textContent = '// Chưa có file mã nguồn nào được lưu cho bài tập này.';
     }
   } catch (e) {
     console.error('Failed to load code files:', e);
+    const codeBlock = document.getElementById('viewer-code-block');
+    if (codeBlock) codeBlock.textContent = '// Lỗi khi tải danh sách file bài tập.';
   }
 
   switchViewerTab('preview');
@@ -529,7 +535,7 @@ function renderCodeFileTabs(files) {
   if (!tabsContainer) return;
 
   tabsContainer.innerHTML = files.map((f, i) => `
-    <button onclick="loadCodeFileContent('${f.filename}')" class="tab-file-btn px-2.5 py-1 rounded font-mono text-[11px] ${i === 0 ? 'bg-sky-500/20 text-sky-400 font-bold' : 'text-slate-400 hover:text-white'}">
+    <button onclick="loadCodeFileContent('${f.filename.replace(/'/g, "\\'")}')" class="tab-file-btn px-2.5 py-1 rounded font-mono text-[11px] ${i === 0 ? 'bg-sky-500/20 text-sky-400 font-bold' : 'text-slate-400 hover:text-white'}">
       ${f.filename}
     </button>`).join('');
 }
@@ -551,9 +557,14 @@ async function loadCodeFileContent(filename) {
   codeBlock.textContent = 'Đang tải mã nguồn...';
 
   try {
-    const res = await fetch(`/api/assignments/${subjectId}/${assignmentIdx}/files/${filename}`);
+    const res = await fetch(`/api/assignments/${subjectId}/${assignmentIdx}/files/${encodeURIComponent(filename)}`);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      codeBlock.textContent = `// Lỗi: ${errData.error || 'Không thể đọc nội dung file'}`;
+      return;
+    }
     const data = await res.json();
-    codeBlock.textContent = data.content || '';
+    codeBlock.textContent = data.content !== undefined ? data.content : '// File rỗng';
 
     if (window.Prism) {
       const ext = filename.split('.').pop().toLowerCase();
@@ -563,7 +574,7 @@ async function loadCodeFileContent(filename) {
       Prism.highlightElement(codeBlock);
     }
   } catch (e) {
-    codeBlock.textContent = 'Lỗi khi tải mã nguồn file.';
+    codeBlock.textContent = '// Lỗi mạng khi kết nối tới máy chủ.';
   }
 }
 
