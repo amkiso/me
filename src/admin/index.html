@@ -33,14 +33,14 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6">
       
       <!-- TAB NAVIGATION -->
-      <div class="flex border-b border-subtle mb-6 gap-2">
+      <div class="flex border-b border-subtle mb-6 gap-2 bg-slate-900/60 p-1 rounded-t-xl">
         <button id="tab-btn-subjects" onclick="switchAdminTab('subjects')" class="px-4 py-2.5 text-sm font-bold border-b-2 border-sky-500 text-sky-400 flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-          Môn học & Bài tập PHP / Framework
+          📁 1. Môn học & Bài tập (Upload File PHP/Docx)
         </button>
         <button id="tab-btn-profile" onclick="switchAdminTab('profile')" class="px-4 py-2.5 text-sm font-bold border-b-2 border-transparent text-muted hover:text-slate-200 flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-          Quản trị Nội dung (Profile & Avatar)
+          ⚙️ 2. Quản trị Nội dung (Bật/Tắt Avatar, Bio, Skills)
         </button>
       </div>
 
@@ -239,6 +239,9 @@
             <label class="text-xs font-medium text-secondary">Bài tập / Labs</label>
             <button type="button" id="btn-add-assignment" class="text-xs text-sky-400 hover:text-sky-300 font-semibold">+ Thêm bài tập</button>
           </div>
+          <p class="text-[11px] text-amber-400 bg-amber-500/10 p-2 rounded border border-amber-500/20 mb-2">
+            💡 <strong>Hướng dẫn Upload File (.php / .docx):</strong> Sau khi lưu bài tập, bạn quay lại danh sách môn học và nhấn nút <span class="text-sky-400 font-bold">[Quản lý File & Code]</span> bên cạnh từng bài tập để upload file PHP sandbox hoặc file báo cáo .docx.
+          </p>
           <div id="assignments-list" class="space-y-2"></div>
         </div>
 
