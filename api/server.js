@@ -7,11 +7,17 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cors = require('cors');
 
+const path = require('path');
 const authRoutes = require('./routes/auth');
 const subjectsRoutes = require('./routes/subjects');
+const profileRoutes = require('./routes/profile');
+const assignmentsRoutes = require('./routes/assignments');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Serve uploads static folder
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Trust proxy (behind Nginx)
 app.set('trust proxy', 1);
@@ -48,6 +54,8 @@ passport.deserializeUser((obj, done) => done(null, obj));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/subjects', subjectsRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/assignments', assignmentsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -1,0 +1,64 @@
+{
+  "show_avatar": true,
+  "avatar_url": "admin/avt.png",
+  "name": "Lô Hoàng Vũ",
+  "badge": "FullStack Developer Intern",
+  "bio": "Sinh viên năm cuối ngành Công nghệ Thông tin chuyên ngành Kỹ thuật Phần mềm, có kinh nghiệm thiết kế và phát triển ứng dụng web, ứng dụng Windows Desktop và mobile full-stack qua các dự án học tập và cá nhân. Thành thạo Java (Spring Boot), .NET (ASP.NET MVC, Windows Forms), C#, Flutter, SQL Server, PostgreSQL, AWS Services và phát triển RESTful API. Mong muốn tìm kiếm cơ hội thực tập Full Stack Developer để đóng góp vào các sản phẩm thực tế và phát triển chuyên môn.",
+  "contacts": {
+    "email": "hoangvu2004dl@gmail.com",
+    "phone": "0353686501",
+    "address": "Núi Thành, Tân Bình, TP.HCM",
+    "github": "https://github.com/amkiso"
+  },
+  "education": {
+    "school": "Trường Đại học Công Thương TP.HCM (HUIT)",
+    "school_en": "Ho Chi Minh City University of Industry and Trade",
+    "period": "2023 - Present",
+    "major": "Công nghệ Thông tin - Kỹ thuật Phần mềm (Information Technology - Software Engineering)",
+    "highlights": "Thiết kế và triển khai nhiều dự án full-stack; phát triển ứng dụng di động đa nền tảng (Flutter) và ứng dụng Windows Forms (.NET); quản lý dịch vụ đám mây AWS, container với Docker, thiết lập CI/CD pipelines và quản trị cơ sở dữ liệu quan hệ (SQL Server, PostgreSQL)."
+  },
+  "skill_categories": [
+    {
+      "id": "languages",
+      "title": "Ngôn ngữ Lập trình",
+      "icon": "code",
+      "color": "sky",
+      "skills": ["Java", "C#", "JavaScript", "Python", "SQL", "HTML5 / CSS3", "PHP", "C"]
+    },
+    {
+      "id": "frameworks",
+      "title": "Frameworks & App Dev",
+      "icon": "layers",
+      "color": "emerald",
+      "skills": ["Spring Boot", "ASP.NET MVC (.NET)", "Windows Forms (.NET)", "Flutter", "Spring Security", "Spring Data JPA", "RESTful APIs", "JWT Authentication", "LINQ to SQL", "Bootstrap", "AJAX"]
+    },
+    {
+      "id": "databases",
+      "title": "Cơ sở Dữ liệu",
+      "icon": "database",
+      "color": "blue",
+      "skills": ["Microsoft SQL Server", "PostgreSQL", "MySQL", "MongoDB"]
+    },
+    {
+      "id": "cloud_devops",
+      "title": "Cloud & DevOps",
+      "icon": "cloud",
+      "color": "cyan",
+      "skills": ["AWS Services (EC2, S3, RDS, CloudFront, Route53)", "Docker", "GitHub Actions (CI/CD)", "Cloudflare R2 Object Storage", "Microsoft Azure"]
+    },
+    {
+      "id": "tools",
+      "title": "Công cụ Lập trình",
+      "icon": "tool",
+      "color": "amber",
+      "skills": ["Git & GitHub", "Postman", "Visual Studio", "VS Code", "IntelliJ IDEA", "Android Studio"]
+    },
+    {
+      "id": "architecture",
+      "title": "Kiến thức Kiến trúc",
+      "icon": "cpu",
+      "color": "rose",
+      "skills": ["OOP (Hướng đối tượng)", "MVC Architecture", "REST API Design", "Database Design", "RBAC (Phân quyền)", "CI/CD"]
+    }
+  ]
+}

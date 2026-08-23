@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollAnimations();
   initAdminSecretTriggers(); // Kích hoạt phím tắt & lối vào Admin ẩn
 
+  loadProfileData();
   if (document.getElementById('subjects-container')) loadSubjects();
   if (document.getElementById('course-detail-container')) loadCourseDetail();
   if (document.getElementById('contact-form')) initContactForm();
@@ -351,23 +352,29 @@ async function loadCourseDetail() {
                     ${String(idx + 1).padStart(2, '0')}
                   </span>
                   <div>
-                    <h3 class="text-sm font-semibold text-primary">${a.title}</h3>
-                    <p class="text-xs text-muted mt-0.5">Thực hành & kiểm định source code</p>
+                   <div class="flex items-center gap-2 self-end sm:self-center">
+                    ${a.files && a.files.length > 0 ? `
+                      <button onclick="openAssignmentViewer('${course.id}', ${idx}, '${a.title.replace(/'/g, "\\'")}', '${a.entry_file || 'index.php'}')" class="btn-primary px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Preview PHP & Code
+                      </button>` : ''}
+                    ${a.docx_file ? `
+                      <button onclick="openDocxViewer('${a.docx_file}', '${a.title.replace(/'/g, "\\'")}')" class="btn-outline px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 border-amber-500/40 text-amber-400 hover:bg-amber-500/10">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Xem Báo cáo .docx
+                      </button>` : ''}
+                    ${a.github_url ? `
+                      <a href="${a.github_url}" target="_blank" rel="noopener" class="btn-outline px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 hover:border-sky-500 hover:text-sky-500 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                        Source Code
+                      </a>` : ''}
+                    ${a.demo_url ? `
+                      <a href="${a.demo_url}" target="_blank" rel="noopener" class="btn-primary px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        Xem Demo
+                      </a>` : ''}
                   </div>
-                </div>
-                <div class="flex items-center gap-2 self-end sm:self-center">
-                  ${a.github_url ? `
-                    <a href="${a.github_url}" target="_blank" rel="noopener" class="btn-outline px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 hover:border-sky-500 hover:text-sky-500 transition-colors">
-                      <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                      Source Code
-                    </a>` : ''}
-                  ${a.demo_url ? `
-                    <a href="${a.demo_url}" target="_blank" rel="noopener" class="btn-primary px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                      Xem Live Demo
-                    </a>` : ''}
-                </div>
-              </div>`).join('')}
+                </div>`).join('')}
           </div>
         </div>
       </div>`;
@@ -379,6 +386,241 @@ async function loadCourseDetail() {
         <p class="text-sm text-muted mb-4">${err.message}</p>
         <a href="courses.html" class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium">Thử lại</a>
       </div>`;
+  }
+}
+
+/* ---- Dynamic Profile Data Loader ---- */
+async function loadProfileData() {
+  try {
+    const res = await fetch('/api/profile');
+    if (!res.ok) return;
+    const profile = await res.json();
+
+    // 1. Toggle Avatar
+    const avatarImgs = document.querySelectorAll('#nav-avatar-img, #hero-avatar-img, footer img');
+    const heroAvatarContainer = document.getElementById('hero-avatar-container');
+
+    if (profile.show_avatar === false) {
+      avatarImgs.forEach(img => img.style.display = 'none');
+      if (heroAvatarContainer) heroAvatarContainer.style.display = 'none';
+    } else {
+      avatarImgs.forEach(img => {
+        img.style.display = '';
+        if (profile.avatar_url) img.src = profile.avatar_url;
+      });
+      if (heroAvatarContainer) heroAvatarContainer.style.display = 'flex';
+    }
+
+    // 2. Profile Info & Hero
+    if (profile.badge && document.getElementById('hero-badge')) document.getElementById('hero-badge').textContent = profile.badge;
+    if (profile.name) {
+      if (document.getElementById('hero-name')) document.getElementById('hero-name').textContent = profile.name;
+      const parts = profile.name.split(' ');
+      if (parts.length >= 2) {
+        if (document.getElementById('nav-name-first')) document.getElementById('nav-name-first').textContent = parts.slice(0, -1).join(' ');
+        if (document.getElementById('nav-name-last')) document.getElementById('nav-name-last').textContent = parts[parts.length - 1];
+      }
+    }
+    if (profile.bio && document.getElementById('hero-bio')) document.getElementById('hero-bio').textContent = profile.bio;
+
+    // Contacts
+    if (profile.contacts) {
+      if (profile.contacts.email && document.getElementById('hero-email')) document.getElementById('hero-email').textContent = profile.contacts.email;
+      if (profile.contacts.phone && document.getElementById('hero-phone')) document.getElementById('hero-phone').textContent = profile.contacts.phone;
+      if (profile.contacts.address && document.getElementById('hero-address')) document.getElementById('hero-address').textContent = profile.contacts.address;
+      if (profile.contacts.github && document.getElementById('nav-github')) document.getElementById('nav-github').href = profile.contacts.github;
+    }
+
+    // Education
+    if (profile.education) {
+      if (profile.education.school && document.getElementById('edu-school')) document.getElementById('edu-school').textContent = profile.education.school;
+      if (profile.education.school_en && document.getElementById('edu-school-en')) document.getElementById('edu-school-en').textContent = profile.education.school_en;
+      if (profile.education.period && document.getElementById('edu-period')) document.getElementById('edu-period').textContent = profile.education.period;
+      if (profile.education.major && document.getElementById('edu-major')) document.getElementById('edu-major').textContent = profile.education.major;
+      if (profile.education.highlights && document.getElementById('edu-highlights')) document.getElementById('edu-highlights').textContent = profile.education.highlights;
+    }
+
+    // 3. Render Skill Categories Grid
+    const skillsGrid = document.getElementById('skills-grid');
+    if (skillsGrid && profile.skill_categories && profile.skill_categories.length > 0) {
+      const colorMap = {
+        sky: 'bg-sky-500/10 text-sky-500',
+        emerald: 'bg-emerald-500/10 text-emerald-500',
+        blue: 'bg-blue-500/10 text-blue-500',
+        cyan: 'bg-cyan-500/10 text-cyan-500',
+        amber: 'bg-amber-500/10 text-amber-500',
+        rose: 'bg-rose-500/10 text-rose-500'
+      };
+
+      skillsGrid.innerHTML = profile.skill_categories.map((cat, i) => `
+        <div class="card p-6 fade-in" style="animation-delay:${i * 0.06}s">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 rounded-lg ${colorMap[cat.color] || 'bg-sky-500/10 text-sky-500'} flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+            </div>
+            <h3 class="text-base font-bold text-primary">${cat.title}</h3>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            ${cat.skills.map(s => {
+              const name = typeof s === 'string' ? s : s.name;
+              return `<span class="px-2.5 py-1 rounded-md bg-subtle border border-subtle text-xs font-medium text-secondary hover:text-sky-400 transition-colors">${name}</span>`;
+            }).join('')}
+          </div>
+        </div>`).join('');
+    }
+  } catch (err) {
+    console.error('Failed to load profile data:', err);
+  }
+}
+
+/* ---- PHP Sandbox & Assignment Code Viewer Modal Functions ---- */
+let currentAssignmentViewerData = { subjectId: '', assignmentIdx: 0, files: [] };
+
+async function openAssignmentViewer(subjectId, assignmentIdx, title, entryFile) {
+  const modal = document.getElementById('modal-assignment-viewer');
+  if (!modal) return;
+
+  document.getElementById('modal-viewer-title').textContent = title;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  // Set Iframe src for PHP Sandbox Live Preview
+  const iframe = document.getElementById('viewer-iframe');
+  iframe.src = `/preview/${subjectId}/${assignmentIdx}/${entryFile || 'index.php'}`;
+
+  // Fetch list of files for Code Viewer
+  try {
+    const res = await fetch(`/api/assignments/${subjectId}/${assignmentIdx}/files`);
+    const files = await res.json();
+    currentAssignmentViewerData = { subjectId, assignmentIdx, files };
+
+    renderCodeFileTabs(files);
+    if (files.length > 0) {
+      loadCodeFileContent(files[0].filename);
+    }
+  } catch (e) {
+    console.error('Failed to load code files:', e);
+  }
+
+  switchViewerTab('preview');
+}
+
+function switchViewerTab(tab) {
+  const previewContent = document.getElementById('tab-preview-content');
+  const codeContent = document.getElementById('tab-code-content');
+  const btnPreview = document.getElementById('btn-tab-preview');
+  const btnCode = document.getElementById('btn-tab-code');
+
+  if (tab === 'preview') {
+    previewContent.classList.remove('hidden');
+    codeContent.classList.add('hidden');
+    btnPreview.className = 'px-3 py-1 rounded-md font-semibold text-sky-400 bg-sky-500/10';
+    btnCode.className = 'px-3 py-1 rounded-md font-semibold text-muted hover:text-primary';
+  } else {
+    previewContent.classList.add('hidden');
+    codeContent.classList.remove('hidden');
+    btnCode.className = 'px-3 py-1 rounded-md font-semibold text-sky-400 bg-sky-500/10';
+    btnPreview.className = 'px-3 py-1 rounded-md font-semibold text-muted hover:text-primary';
+  }
+}
+
+function renderCodeFileTabs(files) {
+  const tabsContainer = document.getElementById('code-file-tabs');
+  if (!tabsContainer) return;
+
+  tabsContainer.innerHTML = files.map((f, i) => `
+    <button onclick="loadCodeFileContent('${f.filename}')" class="tab-file-btn px-2.5 py-1 rounded font-mono text-[11px] ${i === 0 ? 'bg-sky-500/20 text-sky-400 font-bold' : 'text-slate-400 hover:text-white'}">
+      ${f.filename}
+    </button>`).join('');
+}
+
+async function loadCodeFileContent(filename) {
+  const { subjectId, assignmentIdx } = currentAssignmentViewerData;
+  const codeBlock = document.getElementById('viewer-code-block');
+  if (!codeBlock) return;
+
+  // Highlight active tab
+  document.querySelectorAll('.tab-file-btn').forEach(btn => {
+    if (btn.textContent.trim() === filename) {
+      btn.className = 'tab-file-btn px-2.5 py-1 rounded font-mono text-[11px] bg-sky-500/20 text-sky-400 font-bold';
+    } else {
+      btn.className = 'tab-file-btn px-2.5 py-1 rounded font-mono text-[11px] text-slate-400 hover:text-white';
+    }
+  });
+
+  codeBlock.textContent = 'Đang tải mã nguồn...';
+
+  try {
+    const res = await fetch(`/api/assignments/${subjectId}/${assignmentIdx}/files/${filename}`);
+    const data = await res.json();
+    codeBlock.textContent = data.content || '';
+
+    if (window.Prism) {
+      const ext = filename.split('.').pop().toLowerCase();
+      let lang = 'php';
+      if (['js', 'json', 'css', 'html'].includes(ext)) lang = ext;
+      codeBlock.className = `language-${lang}`;
+      Prism.highlightElement(codeBlock);
+    }
+  } catch (e) {
+    codeBlock.textContent = 'Lỗi khi tải mã nguồn file.';
+  }
+}
+
+function copyCurrentCode() {
+  const codeBlock = document.getElementById('viewer-code-block');
+  if (codeBlock && codeBlock.textContent) {
+    navigator.clipboard.writeText(codeBlock.textContent);
+    showToast('Đã copy mã nguồn!', 'success');
+  }
+}
+
+function closeViewerModal() {
+  const modal = document.getElementById('modal-assignment-viewer');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.getElementById('viewer-iframe').src = 'about:blank';
+  }
+}
+
+/* ---- DOCX Word Document Viewer Modal Functions ---- */
+async function openDocxViewer(docxUrl, title) {
+  const modal = document.getElementById('modal-docx-viewer');
+  const container = document.getElementById('docx-container');
+  const titleEl = document.getElementById('modal-docx-title');
+  const downloadBtn = document.getElementById('btn-download-docx');
+
+  if (!modal || !container) return;
+
+  titleEl.textContent = `Báo cáo: ${title}`;
+  downloadBtn.href = docxUrl;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  container.innerHTML = '<p class="text-center text-gray-500 italic py-10">Đang tải và render tài liệu Word (.docx)...</p>';
+
+  try {
+    const response = await fetch(docxUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+
+    container.innerHTML = '';
+    if (window.docx) {
+      await window.docx.renderAsync(blob, container);
+    } else {
+      container.innerHTML = `<div class="p-6 text-center text-red-500">Thư viện docx-preview chưa sẵn sàng. Vui lòng bấm nút Tải về để xem file Word.</div>`;
+    }
+  } catch (err) {
+    container.innerHTML = `<div class="p-6 text-center text-red-500">Không thể render file Word: ${err.message}. Vui lòng bấm nút Tải về.</div>`;
+  }
+}
+
+function closeDocxModal() {
+  const modal = document.getElementById('modal-docx-viewer');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
   }
 }
 
