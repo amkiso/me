@@ -6,15 +6,13 @@ const { generateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-// ---- Cấu hình Redirect & Callback đọc từ file .env ----
-const rawBaseUrl = process.env.BASE_URL || 'http://localhost';
+// ---- Cấu hình Redirect & Callback ----
+let rawBaseUrl = process.env.BASE_URL || 'https://hoangvux.me';
 const BASE_URL = rawBaseUrl.replace(/\/+$/, '');
 
-// URL chuyển hướng khi thành công / thất bại
 const REDIRECT_SUCCESS_URL = process.env.REDIRECT_SUCCESS_URL || `${BASE_URL}/admin/`;
 const REDIRECT_FAILURE_URL = process.env.REDIRECT_FAILURE_URL || `${BASE_URL}/?access=denied`;
 
-// Callback URL cho từng nhà cung cấp OAuth
 const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL || `${BASE_URL}/api/auth/github/callback`;
 const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || `${BASE_URL}/api/auth/google/callback`;
 
@@ -24,11 +22,14 @@ const ALLOWED_ADMIN_EMAILS = [
   'amkiso'
 ];
 
-// ---- GitHub OAuth Strategy ----
-if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+// ---- Setup Passport GitHub Strategy ----
+const githubId = process.env.GITHUB_CLIENT_ID ? process.env.GITHUB_CLIENT_ID.trim() : '';
+const githubSecret = process.env.GITHUB_CLIENT_SECRET ? process.env.GITHUB_CLIENT_SECRET.trim() : '';
+
+if (githubId && githubSecret) {
   passport.use(new GitHubStrategy({
-    clientID: process.env.GITHUB_CLIENT_ID,
-    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    clientID: githubId,
+    clientSecret: githubSecret,
     callbackURL: GITHUB_CALLBACK_URL,
     scope: ['user:email']
   }, (accessToken, refreshToken, profile, done) => {
@@ -43,22 +44,16 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
     };
     done(null, user);
   }));
-
-  router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
-
-  router.get('/github/callback',
-    passport.authenticate('github', { failureRedirect: REDIRECT_FAILURE_URL }),
-    (req, res) => {
-      handleOAuthCallback(req, res);
-    }
-  );
 }
 
-// ---- Google OAuth Strategy ----
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+// ---- Setup Passport Google Strategy ----
+const googleId = process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.trim() : '';
+const googleSecret = process.env.GOOGLE_CLIENT_SECRET ? process.env.GOOGLE_CLIENT_SECRET.trim() : '';
+
+if (googleId && googleSecret) {
   passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    clientID: googleId,
+    clientSecret: googleSecret,
     callbackURL: GOOGLE_CALLBACK_URL,
     scope: ['profile', 'email']
   }, (accessToken, refreshToken, profile, done) => {
@@ -73,18 +68,57 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     };
     done(null, user);
   }));
-
-  router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-  router.get('/google/callback',
-    passport.authenticate('google', { failureRedirect: REDIRECT_FAILURE_URL }),
-    (req, res) => {
-      handleOAuthCallback(req, res);
-    }
-  );
 }
 
-// ---- Handle OAuth callback ----
+// ---- GitHub Routes ----
+router.get('/github', (req, res, next) => {
+  if (!githubId || !githubSecret) {
+    return res.status(400).send(`
+      <div style="font-family:sans-serif; padding:40px; text-align:center;">
+        <h2 style="color:#e11d48;">Chưa cấu hình GitHub OAuth Credentials</h2>
+        <p>Vui lòng điền <b>GITHUB_CLIENT_ID</b> và <b>GITHUB_CLIENT_SECRET</b> vào file <code>api/.env</code> trên máy chủ EC2.</p>
+        <br>
+        <a href="/" style="color:#0ea5e9; font-weight:bold;">Quay lại trang chủ</a>
+      </div>
+    `);
+  }
+  passport.authenticate('github', { scope: ['user:email'] })(req, res, next);
+});
+
+router.get('/github/callback', (req, res, next) => {
+  if (!githubId || !githubSecret) {
+    return res.redirect(REDIRECT_FAILURE_URL);
+  }
+  passport.authenticate('github', { failureRedirect: REDIRECT_FAILURE_URL })(req, res, () => {
+    handleOAuthCallback(req, res);
+  });
+});
+
+// ---- Google Routes ----
+router.get('/google', (req, res, next) => {
+  if (!googleId || !googleSecret) {
+    return res.status(400).send(`
+      <div style="font-family:sans-serif; padding:40px; text-align:center;">
+        <h2 style="color:#e11d48;">Chưa cấu hình Google OAuth Credentials</h2>
+        <p>Vui lòng điền <b>GOOGLE_CLIENT_ID</b> và <b>GOOGLE_CLIENT_SECRET</b> vào file <code>api/.env</code> trên máy chủ EC2.</p>
+        <br>
+        <a href="/" style="color:#0ea5e9; font-weight:bold;">Quay lại trang chủ</a>
+      </div>
+    `);
+  }
+  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
+
+router.get('/google/callback', (req, res, next) => {
+  if (!googleId || !googleSecret) {
+    return res.redirect(REDIRECT_FAILURE_URL);
+  }
+  passport.authenticate('google', { failureRedirect: REDIRECT_FAILURE_URL })(req, res, () => {
+    handleOAuthCallback(req, res);
+  });
+});
+
+// ---- Handle OAuth Callback ----
 function handleOAuthCallback(req, res) {
   const user = req.user;
   if (!user) {
@@ -102,12 +136,8 @@ function handleOAuthCallback(req, res) {
   }
 
   const token = generateToken(user);
-  
-  // Ghép token vào REDIRECT_SUCCESS_URL đã khai báo trong .env
   const separator = REDIRECT_SUCCESS_URL.includes('?') ? '&' : '?';
-  const finalRedirectUrl = `${REDIRECT_SUCCESS_URL}${separator}token=${token}`;
-  
-  return res.redirect(finalRedirectUrl);
+  return res.redirect(`${REDIRECT_SUCCESS_URL}${separator}token=${token}`);
 }
 
 // ---- Verify current token ----
