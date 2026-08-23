@@ -1,0 +1,66 @@
+require('dotenv').config();
+
+const express = require('express');
+const session = require('express-session');
+const passport = require('passport');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const cors = require('cors');
+
+const authRoutes = require('./routes/auth');
+const subjectsRoutes = require('./routes/subjects');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Trust proxy (behind Nginx)
+app.set('trust proxy', 1);
+
+// Middleware
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(morgan('short'));
+app.use(cors({
+  origin: process.env.BASE_URL || 'http://localhost',
+  credentials: true
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Session (for OAuth flow)
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'dev-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  }
+}));
+
+// Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((obj, done) => done(null, obj));
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/subjects', subjectsRoutes);
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Server error:', err.message);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`API server running on port ${PORT}`);
+  console.log(`Admin users: ${process.env.ADMIN_USERS || '(none configured)'}`);
+});

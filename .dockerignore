@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dockerignore
+README.md
+Makefile
+deploy.sh
+*.md
+node_modules
+.env
+.vscode

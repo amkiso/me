@@ -1,0 +1,47 @@
+[
+  {
+    "id": "web-php",
+    "name": "Lập trình mã nguồn mở (PHP)",
+    "semester": "HK1 - Năm 4",
+    "description": "Xây dựng ứng dụng web động sử dụng PHP, MySQL, MVC pattern. Bao gồm xử lý form, session, authentication, CRUD operations và triển khai trên server.",
+    "icon": "web",
+    "color": "from-sky-500 to-blue-600",
+    "assignments": [
+      {
+        "title": "Bài tập nhóm( đồ án)",
+        "github_url": "",
+        "demo_url": ""
+      }
+    ]
+  },
+  {
+    "id": "mobile-dev",
+    "name": "Lập trình di động",
+    "semester": "HK2 - Năm 3",
+    "description": "Phát triển một hệ thống cho thuê thiết bị, với quy mô công ty với chức năng kho phân tán, gồm danh mục thiết bị công ty kinh doanh, hợp đồng thuê, quản lý các thiết bị trong kho (công ty có nhiều kho). Xử lý các yêu cầu thuê, xử lý nghiệp vụ trong lúc thuê, tình trạng hợp đồng... Hệ thống gồm: server API - server SQL, server CDN lưu trữ hình ảnh (cloudflare R2). Triển khai trên môi trường máy chủ thực tế, chưa có thanh toán và treo lên chợ ứng dụng CHplay",
+    "icon": "mobile",
+    "color": "from-emerald-500 to-teal-600",
+    "assignments": [
+      {
+        "title": "XCypher",
+        "github_url": "https://github.com/amkiso/Device_APIsever",
+        "demo_url": ""
+      }
+    ]
+  },
+  {
+    "id": "application",
+    "name": "Lập trình .NET",
+    "semester": "HK1 - Năm 3",
+    "description": "Lập trình ứng dụng windows bằng .NET C#. Xây dựng ứng dụng quản lý khách sạn cho windows bằng .NET framework",
+    "icon": "default",
+    "color": "from-sky-500 to-blue-600",
+    "assignments": [
+      {
+        "title": "Khách sạn sao băng",
+        "github_url": "https://github.com/amkiso/Congnghe-dotNET",
+        "demo_url": ""
+      }
+    ]
+  }
+]
