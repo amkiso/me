@@ -5,7 +5,19 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { generateToken } = require('../middleware/auth');
 
 const router = express.Router();
-const BASE_URL = process.env.BASE_URL || 'http://localhost';
+
+// ---- Cấu hình Redirect & Callback đọc từ file .env ----
+const rawBaseUrl = process.env.BASE_URL || 'http://localhost';
+const BASE_URL = rawBaseUrl.replace(/\/+$/, '');
+
+// URL chuyển hướng khi thành công / thất bại
+const REDIRECT_SUCCESS_URL = process.env.REDIRECT_SUCCESS_URL || `${BASE_URL}/admin/`;
+const REDIRECT_FAILURE_URL = process.env.REDIRECT_FAILURE_URL || `${BASE_URL}/?access=denied`;
+
+// Callback URL cho từng nhà cung cấp OAuth
+const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL || `${BASE_URL}/api/auth/github/callback`;
+const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || `${BASE_URL}/api/auth/google/callback`;
+
 const ALLOWED_ADMIN_EMAILS = [
   'hoangvu2004dl@gmail.com',
   'thangcuoi1984a@gmail.com',
@@ -17,7 +29,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   passport.use(new GitHubStrategy({
     clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: `${BASE_URL}/api/auth/github/callback`,
+    callbackURL: GITHUB_CALLBACK_URL,
     scope: ['user:email']
   }, (accessToken, refreshToken, profile, done) => {
     const email = profile.emails?.[0]?.value || '';
@@ -35,7 +47,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
 
   router.get('/github/callback',
-    passport.authenticate('github', { failureRedirect: '/' }),
+    passport.authenticate('github', { failureRedirect: REDIRECT_FAILURE_URL }),
     (req, res) => {
       handleOAuthCallback(req, res);
     }
@@ -47,7 +59,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: `${BASE_URL}/api/auth/google/callback`,
+    callbackURL: GOOGLE_CALLBACK_URL,
     scope: ['profile', 'email']
   }, (accessToken, refreshToken, profile, done) => {
     const email = profile.emails?.[0]?.value || '';
@@ -65,7 +77,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
   router.get('/google/callback',
-    passport.authenticate('google', { failureRedirect: '/' }),
+    passport.authenticate('google', { failureRedirect: REDIRECT_FAILURE_URL }),
     (req, res) => {
       handleOAuthCallback(req, res);
     }
@@ -75,6 +87,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 // ---- Handle OAuth callback ----
 function handleOAuthCallback(req, res) {
   const user = req.user;
+  if (!user) {
+    return res.redirect(REDIRECT_FAILURE_URL);
+  }
+
   const email = (user.email || '').toLowerCase().trim();
   const username = (user.username || '').toLowerCase().trim();
 
@@ -82,11 +98,16 @@ function handleOAuthCallback(req, res) {
 
   if (!isAllowed) {
     req.logout(() => {});
-    return res.redirect('/?access=denied');
+    return res.redirect(REDIRECT_FAILURE_URL);
   }
 
   const token = generateToken(user);
-  res.redirect(`/admin/?token=${token}`);
+  
+  // Ghép token vào REDIRECT_SUCCESS_URL đã khai báo trong .env
+  const separator = REDIRECT_SUCCESS_URL.includes('?') ? '&' : '?';
+  const finalRedirectUrl = `${REDIRECT_SUCCESS_URL}${separator}token=${token}`;
+  
+  return res.redirect(finalRedirectUrl);
 }
 
 // ---- Verify current token ----

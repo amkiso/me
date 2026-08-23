@@ -6,12 +6,74 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileNav();
   initActiveNav();
   initScrollAnimations();
+  initAdminSecretTriggers(); // Kích hoạt phím tắt & lối vào Admin ẩn
 
   if (document.getElementById('subjects-container')) loadSubjects();
   if (document.getElementById('course-detail-container')) loadCourseDetail();
   if (document.getElementById('contact-form')) initContactForm();
   if (document.getElementById('skill-bars')) initSkillBars();
 });
+
+/* ---- Lối vào Admin Ẩn & Kiểm tra Session Admin trên giao diện ---- */
+function initAdminSecretTriggers() {
+  const token = localStorage.getItem('admin_token');
+
+  // 1. Kiểm tra Session: Nếu đã đăng nhập Admin hợp lệ -> Hiển thị nút "Quản trị" trên Navbar
+  if (token) {
+    fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(res => {
+      if (res.ok) {
+        showAdminNavButton();
+      } else {
+        localStorage.removeItem('admin_token');
+      }
+    })
+    .catch(() => {});
+  }
+
+  // 2. Phím tắt ẩn: Nhấn Ctrl + Shift + A (hoặc Alt + A) để vào thẳng trang Admin
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) || (e.altKey && (e.key === 'a' || e.key === 'A'))) {
+      e.preventDefault();
+      const targetUrl = localStorage.getItem('admin_token') ? '/admin/' : '/admin/login.html';
+      window.location.href = targetUrl;
+    }
+  });
+
+  // 3. Nhấp 3 lần liên tiếp vào Logo Avatar ở góc trái Menu để mở trang Login Admin
+  const navLogos = document.querySelectorAll('a[href="index.html"] img');
+  navLogos.forEach(logo => {
+    let clickCount = 0;
+    let clickTimer = null;
+    logo.addEventListener('click', (e) => {
+      clickCount++;
+      if (clickCount === 1) {
+        clickTimer = setTimeout(() => { clickCount = 0; }, 800);
+      } else if (clickCount >= 3) {
+        e.preventDefault();
+        clearTimeout(clickTimer);
+        clickCount = 0;
+        const targetUrl = localStorage.getItem('admin_token') ? '/admin/' : '/admin/login.html';
+        window.location.href = targetUrl;
+      }
+    });
+  });
+}
+
+/* Hiển thị nút "Quản trị" trên Menu nếu đang có Session hợp lệ */
+function showAdminNavButton() {
+  const desktopNav = document.querySelector('.nav-bar .hidden.md\\:flex');
+  if (desktopNav && !document.getElementById('nav-admin-link')) {
+    const adminBtn = document.createElement('a');
+    adminBtn.id = 'nav-admin-link';
+    adminBtn.href = '/admin/';
+    adminBtn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold bg-sky-500/10 text-sky-500 border border-sky-500/30 hover:bg-sky-500 hover:text-white transition-all ml-1 flex items-center gap-1';
+    adminBtn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg> Trang Quản trị`;
+    desktopNav.insertBefore(adminBtn, desktopNav.querySelector('a[aria-label="GitHub"]'));
+  }
+}
 
 /* ---- Theme Toggle ---- */
 function initTheme() {
@@ -259,7 +321,7 @@ async function loadCourseDetail() {
               </div>
               <div class="flex items-center gap-2">
                 <span class="px-3 py-1.5 rounded-lg bg-black/30 backdrop-blur-md text-white text-xs font-medium flex items-center gap-1.5">
-                  <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                  <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                   ${course.assignments.length} bài tập / labs
                 </span>
               </div>
