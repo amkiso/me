@@ -6,7 +6,9 @@ const { verifyToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 const SUBJECTS_FILE = path.join(__dirname, '..', 'data', 'subjects.json');
-const ASSIGNMENTS_DIR = path.join(__dirname, '..', '..', 'uploads', 'assignments');
+const ASSIGNMENTS_DIR = fs.existsSync('/app/uploads')
+  ? '/app/uploads/assignments'
+  : path.resolve(__dirname, '..', '..', 'uploads', 'assignments');
 
 // Helper to read subjects.json
 function readSubjects() {
@@ -90,7 +92,7 @@ router.get('/:subjectId/:assignmentIdx/files', (req, res) => {
 });
 
 // POST /api/assignments/:subjectId/:assignmentIdx/upload - Upload file (Admin only)
-router.post('/:subjectId/:assignmentIdx/upload', verifyToken, requireAdmin, upload.array('files', 10), (req, res) => {
+router.post('/:subjectId/:assignmentIdx/upload', verifyToken, requireAdmin, upload.any(), (req, res) => {
   const { subjectId, assignmentIdx } = req.params;
   const subjects = readSubjects();
   const subject = subjects.find(s => s.id === subjectId);

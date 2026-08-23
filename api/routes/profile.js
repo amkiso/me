@@ -6,7 +6,9 @@ const { verifyToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 const DATA_FILE = path.join(__dirname, '..', 'data', 'profile.json');
-const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
+const UPLOADS_DIR = fs.existsSync('/app/uploads')
+  ? '/app/uploads'
+  : path.resolve(__dirname, '..', '..', 'uploads');
 
 // Ensure data directory and file exist
 function getProfileData() {
