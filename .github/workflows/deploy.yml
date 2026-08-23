@@ -1,0 +1,37 @@
+name: Deploy Portfolio & CMS to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build & Deploy to AWS EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      # Bước 1: Checkout mã nguồn từ repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Bước 2: Kết nối SSH vào máy chủ EC2 và thực thi các lệnh deploy
+      - name: SSH Remote Commands to Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            # 1. Di chuyển vào thư mục dự án trên VPS EC2
+            cd ~/my-portfolio
+
+            # 2. Đồng bộ mã nguồn mới nhất từ nhánh main
+            git pull origin main
+
+            # 3. Build lại Docker images và khởi động các container ở chế độ background
+            docker compose up -d --build
+
+            # 4. Dọn dẹp các Docker image rác không dùng đến để tiết kiệm dung lượng VPS
+            docker image prune -f
