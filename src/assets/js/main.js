@@ -290,9 +290,17 @@ async function loadCourseDetail() {
   }
 
   try {
-    const res = await fetch('./data/subjects.json');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const subjects = await res.json();
+    let subjects = [];
+    try {
+      const apiRes = await fetch('/api/subjects');
+      if (apiRes.ok) subjects = await apiRes.json();
+    } catch {}
+
+    if (!subjects || subjects.length === 0) {
+      const res = await fetch('./data/subjects.json');
+      if (res.ok) subjects = await res.json();
+    }
+
     const course = subjects.find(s => s.id === courseId);
 
     if (!course) {
@@ -352,37 +360,41 @@ async function loadCourseDetail() {
                     ${String(idx + 1).padStart(2, '0')}
                   </span>
                   <div>
-                   <div class="flex items-center gap-2 self-end sm:self-center">
-                    ${a.files && a.files.length > 0 ? `
-                      <button onclick="openAssignmentViewer('${course.id}', ${idx}, '${a.title.replace(/'/g, "\\'")}', '${a.entry_file || 'index.php'}')" class="btn-primary px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Preview PHP & Code
-                      </button>` : ''}
-                    ${a.docx_file ? `
-                      <button onclick="openDocxViewer('${a.docx_file}', '${a.title.replace(/'/g, "\\'")}')" class="btn-outline px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 border-amber-500/40 text-amber-400 hover:bg-amber-500/10">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        Xem Báo cáo .docx
-                      </button>` : ''}
-                    ${a.github_url ? `
-                      <a href="${a.github_url}" target="_blank" rel="noopener" class="btn-outline px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 hover:border-sky-500 hover:text-sky-500 transition-colors">
-                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                        Source Code
-                      </a>` : ''}
-                    ${a.demo_url ? `
-                      <a href="${a.demo_url}" target="_blank" rel="noopener" class="btn-primary px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                        Xem Demo
-                      </a>` : ''}
+                    <h3 class="text-sm font-bold text-primary">${a.title}</h3>
+                    <p class="text-xs text-muted mt-0.5 line-clamp-2">${a.description || 'Bài tập thực hành trong chương trình môn học'}</p>
                   </div>
-                </div>`).join('')}
+                </div>
+                <div class="flex items-center gap-2 self-end sm:self-center">
+                  ${(a.files && a.files.length > 0) || a.entry_file || course.id === 'web-php' ? `
+                    <button onclick="openAssignmentViewer('${course.id}', ${idx}, '${a.title.replace(/'/g, "\\'")}', '${a.entry_file || 'index.php'}')" class="btn-primary px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      Preview PHP & Code
+                    </button>` : ''}
+                  ${a.docx_file ? `
+                    <button onclick="openDocxViewer('${a.docx_file}', '${a.title.replace(/'/g, "\\'")}')" class="btn-outline px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 border-amber-500/40 text-amber-400 hover:bg-amber-500/10">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                      Xem Báo cáo .docx
+                    </button>` : ''}
+                  ${a.github_url ? `
+                    <a href="${a.github_url}" target="_blank" rel="noopener" class="btn-outline px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 hover:border-sky-500 hover:text-sky-500 transition-colors">
+                      <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                      Source Code
+                    </a>` : ''}
+                  ${a.demo_url ? `
+                    <a href="${a.demo_url}" target="_blank" rel="noopener" class="btn-primary px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                      Xem Demo
+                    </a>` : ''}
+                </div>
+              </div>`).join('')}
           </div>
         </div>
       </div>`;
-
   } catch (err) {
+    console.error('Failed to load course details:', err);
     container.innerHTML = `
       <div class="card p-8 text-center">
-        <h2 class="text-lg font-bold text-primary mb-2">Không thể tải thông tin môn học</h2>
+        <h2 class="text-lg font-bold text-primary mb-2">Lỗi tải dữ liệu môn học</h2>
         <p class="text-sm text-muted mb-4">${err.message}</p>
         <a href="courses.html" class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium">Thử lại</a>
       </div>`;
@@ -484,16 +496,53 @@ async function openAssignmentViewer(subjectId, assignmentIdx, title, entryFile) 
   modal.classList.remove('hidden');
   modal.classList.add('flex');
 
-  // Set Iframe src for PHP Sandbox Live Preview
   const iframe = document.getElementById('viewer-iframe');
-  iframe.src = `/preview/${subjectId}/${assignmentIdx}/${entryFile || 'index.php'}`;
+  const phpSelect = document.getElementById('viewer-php-file-select');
 
-  // Fetch list of files for Code Viewer
+  // Do not auto-run demo directly; set friendly initial placeholder page inside iframe
+  iframe.removeAttribute('src');
+  iframe.srcdoc = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #94a3b8; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
+        .box { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(14, 165, 233, 0.2); padding: 32px; border-radius: 12px; max-width: 480px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
+        h3 { color: #f1f5f9; margin-top: 0; margin-bottom: 8px; font-size: 16px; font-weight: 700; }
+        p { font-size: 13px; line-height: 1.6; margin-bottom: 0; }
+        .badge { display: inline-block; background: rgba(14, 165, 233, 0.15); color: #38bdf8; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 600; text-transform: uppercase; tracking: 0.05em; margin-bottom: 12px; border: 1px solid rgba(56, 189, 248, 0.2); }
+      </style>
+    </head>
+    <body>
+      <div class="box">
+        <div class="badge">⚙️ Chế độ Sandbox Thủ Công</div>
+        <h3>Chưa khởi chạy Live Demo</h3>
+        <p>Vui lòng chọn 1 file PHP trong danh sách phía trên và bấm nút <strong style="color:#38bdf8;">▶ Chạy Demo File Đã Chọn</strong> để chạy bài tập này.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // Fetch list of files for Code Viewer & Demo Selector
   try {
     const res = await fetch(`/api/assignments/${subjectId}/${assignmentIdx}/files`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const files = await res.json();
-    currentAssignmentViewerData = { subjectId, assignmentIdx, files: files || [] };
+    currentAssignmentViewerData = { subjectId, assignmentIdx, files: files || [], entryFile };
+
+    // Populate PHP file selector dropdown
+    if (phpSelect) {
+      const phpFiles = (files || []).filter(f => f.filename.toLowerCase().endsWith('.php'));
+      if (phpFiles.length > 0) {
+        phpSelect.innerHTML = phpFiles.map(f => `
+          <option value="${f.filename}" ${f.filename === entryFile ? 'selected' : ''}>
+            ${f.filename} ${f.filename === entryFile ? '(Mặc định)' : ''}
+          </option>`).join('');
+      } else {
+        phpSelect.innerHTML = '<option value="">(Không tìm thấy file .php)</option>';
+      }
+    }
 
     renderCodeFileTabs(files || []);
     if (files && files.length > 0) {
@@ -504,11 +553,29 @@ async function openAssignmentViewer(subjectId, assignmentIdx, title, entryFile) 
     }
   } catch (e) {
     console.error('Failed to load code files:', e);
+    if (phpSelect) phpSelect.innerHTML = '<option value="">(Lỗi tải danh sách file)</option>';
     const codeBlock = document.getElementById('viewer-code-block');
     if (codeBlock) codeBlock.textContent = '// Lỗi khi tải danh sách file bài tập.';
   }
 
   switchViewerTab('preview');
+}
+
+function runSelectedPhpDemo() {
+  const phpSelect = document.getElementById('viewer-php-file-select');
+  const selectedFile = phpSelect ? phpSelect.value : '';
+
+  if (!selectedFile) {
+    alert('Vui lòng chọn 1 file .php trong danh sách để chạy demo!');
+    return;
+  }
+
+  const { subjectId, assignmentIdx } = currentAssignmentViewerData;
+  const iframe = document.getElementById('viewer-iframe');
+  if (!iframe) return;
+
+  iframe.removeAttribute('srcdoc');
+  iframe.src = `/preview/${subjectId}/${assignmentIdx}/${encodeURIComponent(selectedFile)}`;
 }
 
 function switchViewerTab(tab) {
@@ -637,17 +704,41 @@ function closeDocxModal() {
 
 /* ---- Contact Form ---- */
 function initContactForm() {
-  document.getElementById('contact-form').addEventListener('submit', e => {
+  const form = document.getElementById('contact-form');
+  if (!form) return;
+
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const d = Object.fromEntries(fd.entries());
-    if (!d.name?.trim() || !d.email?.trim() || !d.message?.trim()) { showToast('Vui lòng điền đầy đủ!', 'error'); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) { showToast('Email không hợp lệ!', 'error'); return; }
+    if (!d.name?.trim() || !d.email?.trim() || !d.message?.trim()) { showToast('Vui lòng điền đầy đủ thông tin!', 'error'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) { showToast('Email không hợp lệ!', 'error'); return; }
 
     const btn = e.target.querySelector('button[type="submit"]');
     const orig = btn.innerHTML;
-    btn.innerHTML = 'Đang gửi...'; btn.disabled = true;
-    setTimeout(() => { showToast('Lời nhắn đã được gửi tới Vũ!', 'success'); e.target.reset(); btn.innerHTML = orig; btn.disabled = false; }, 1200);
+    btn.innerHTML = '<svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Đang gửi...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(d)
+      });
+      const result = await res.json().catch(() => ({}));
+
+      if (res.ok && result.success) {
+        showToast(result.message || 'Lời nhắn đã được gửi thành công!', 'success');
+        e.target.reset();
+      } else {
+        showToast(result.error || 'Có lỗi xảy ra khi gửi tin nhắn!', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối tới máy chủ API!', 'error');
+    } finally {
+      btn.innerHTML = orig;
+      btn.disabled = false;
+    }
   });
 }
 

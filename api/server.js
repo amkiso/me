@@ -8,10 +8,12 @@ const morgan = require('morgan');
 const cors = require('cors');
 
 const path = require('path');
+const fs = require('fs');
 const authRoutes = require('./routes/auth');
 const subjectsRoutes = require('./routes/subjects');
 const profileRoutes = require('./routes/profile');
 const assignmentsRoutes = require('./routes/assignments');
+const contactRoutes = require('./routes/contact');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,7 +31,9 @@ app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(morgan('short'));
 app.use(cors({
-  origin: process.env.BASE_URL || 'http://localhost',
+  origin: (origin, callback) => {
+    callback(null, true);
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -59,6 +63,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/subjects', subjectsRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/assignments', assignmentsRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

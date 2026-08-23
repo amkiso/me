@@ -102,8 +102,23 @@ router.delete('/:id', verifyToken, requireAdmin, (req, res) => {
   const index = subjects.findIndex(s => s.id === req.params.id);
   if (index === -1) return res.status(404).json({ error: 'Không tìm thấy môn học' });
 
+  const subjectId = req.params.id;
   const deleted = subjects.splice(index, 1)[0];
   writeData(subjects);
+
+  // Delete uploaded files folder for this subject
+  const ASSIGNMENTS_DIR = fs.existsSync('/app/uploads')
+    ? '/app/uploads/assignments'
+    : path.resolve(__dirname, '..', '..', 'uploads', 'assignments');
+  const subjectDir = path.join(ASSIGNMENTS_DIR, subjectId);
+  if (fs.existsSync(subjectDir)) {
+    try {
+      fs.rmSync(subjectDir, { recursive: true, force: true });
+    } catch (e) {
+      console.error('Failed to delete subject folder:', e);
+    }
+  }
+
   res.json({ message: 'Đã xóa', subject: deleted });
 });
 
@@ -148,12 +163,42 @@ router.put('/:id/assignments/:idx', verifyToken, requireAdmin, (req, res) => {
 // ---- DELETE /api/subjects/:id/assignments/:idx - Admin only ----
 router.delete('/:id/assignments/:idx', verifyToken, requireAdmin, (req, res) => {
   const subjects = readData();
-  const subject = subjects.find(s => s.id === req.params.id);
+  const subjectId = req.params.id;
+  const subject = subjects.find(s => s.id === subjectId);
   if (!subject) return res.status(404).json({ error: 'Không tìm thấy môn học' });
 
   const idx = parseInt(req.params.idx);
   if (isNaN(idx) || idx < 0 || idx >= subject.assignments.length) {
     return res.status(404).json({ error: 'Assignment index không hợp lệ' });
+  }
+
+  // Manage disk folders
+  const ASSIGNMENTS_DIR = fs.existsSync('/app/uploads')
+    ? '/app/uploads/assignments'
+    : path.resolve(__dirname, '..', '..', 'uploads', 'assignments');
+  const subjectDir = path.join(ASSIGNMENTS_DIR, subjectId);
+  const targetDir = path.join(subjectDir, String(idx));
+
+  // Delete folder of deleted assignment
+  if (fs.existsSync(targetDir)) {
+    try {
+      fs.rmSync(targetDir, { recursive: true, force: true });
+    } catch (e) {
+      console.error('Failed to delete assignment dir:', e);
+    }
+  }
+
+  // Shift remaining folders down by 1 index
+  for (let i = idx + 1; i < subject.assignments.length; i++) {
+    const oldPath = path.join(subjectDir, String(i));
+    const newPath = path.join(subjectDir, String(i - 1));
+    if (fs.existsSync(oldPath)) {
+      try {
+        fs.renameSync(oldPath, newPath);
+      } catch (e) {
+        console.error(`Failed to rename ${oldPath} to ${newPath}:`, e);
+      }
+    }
   }
 
   const deleted = subject.assignments.splice(idx, 1)[0];

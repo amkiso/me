@@ -63,13 +63,32 @@ function getAssignmentPath(subjectId, assignmentIdx) {
 router.get('/:subjectId/:assignmentIdx/files', (req, res) => {
   const { subjectId, assignmentIdx } = req.params;
   const dirPath = getAssignmentPath(subjectId, assignmentIdx);
+  const idx = parseInt(assignmentIdx);
 
   if (!fs.existsSync(dirPath)) {
     return res.json([]);
   }
 
+  const subjects = readSubjects();
+  const subject = subjects.find(s => s.id === subjectId);
+  const assignment = subject && subject.assignments ? subject.assignments[idx] : null;
+
+  if (!assignment) {
+    return res.json([]);
+  }
+
   try {
-    const files = fs.readdirSync(dirPath).map(filename => {
+    const diskFiles = fs.readdirSync(dirPath);
+
+    // Filter disk files: if assignment.files is tracked in subjects.json, only return tracked files
+    const validFiles = diskFiles.filter(filename => {
+      if (assignment.files && Array.isArray(assignment.files) && assignment.files.length > 0) {
+        return assignment.files.includes(filename);
+      }
+      return true;
+    });
+
+    const files = validFiles.map(filename => {
       const stats = fs.statSync(path.join(dirPath, filename));
       const ext = path.extname(filename).toLowerCase();
       let type = 'other';
