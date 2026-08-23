@@ -15,7 +15,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Bước 2: Kết nối SSH vào máy chủ EC2 và thực thi các lệnh deploy
+      # Bước 2: Đóng gói mã nguồn (loại bỏ thư mục .git, uploads và src/data để không ghi đè dữ liệu trên server)
+      - name: Create archive
+        run: tar -czf deploy.tar.gz --exclude='.git' --exclude='deploy.tar.gz' --exclude='uploads' --exclude='src/data' .
+
+      # Bước 3: Gửi file đóng gói lên máy chủ EC2
+      - name: Copy archive to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          source: "deploy.tar.gz"
+          target: "~/my-portfolio"
+
+      # Bước 4: Kết nối SSH để giải nén và khởi động lại Docker
       - name: SSH Remote Commands to Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -25,15 +40,15 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             set -e
-            # 1. Di chuyển vào thư mục dự án trên VPS EC2
+            # 1. Di chuyển vào thư mục dự án
             cd ~/my-portfolio
 
-            # 2. Đồng bộ mã nguồn mới nhất từ nhánh main (ép reset --hard để tránh xung đột với file dữ liệu trên VPS)
-            git fetch origin main
-            git reset --hard origin/main
+            # 2. Giải nén mã nguồn mới và xóa file nén
+            tar -xzf deploy.tar.gz
+            rm deploy.tar.gz
 
             # 3. Build lại Docker images và khởi động các container ở chế độ background
             docker compose up -d --build
 
-            # 4. Dọn dẹp các Docker image rác không dùng đến để tiết kiệm dung lượng VPS
+            # 4. Dọn dẹp các Docker image rác
             docker image prune -f
