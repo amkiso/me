@@ -17,13 +17,7 @@ jobs:
 
       # Bước 2: Đóng gói mã nguồn (loại bỏ .git, uploads, src/data, api/.env)
       - name: Create archive
-<<<<<<< HEAD
         run: tar -czf deploy.tar.gz --exclude='.git' --exclude='deploy.tar.gz' --exclude='uploads' --exclude='src/data' --exclude='api/.env' .
-=======
-        run: |
-          tar -czf ../deploy.tar.gz --exclude='.git' --exclude='uploads' --exclude='src/data' .
-          mv ../deploy.tar.gz .
->>>>>>> f2f87855802a632e197e397e8be855c012d1e493
 
       # Bước 3: Gửi file đóng gói lên máy chủ EC2
       - name: Copy archive to server
