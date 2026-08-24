@@ -487,6 +487,8 @@ async function loadProfileData() {
 
 /* ---- PHP Sandbox & Assignment Code Viewer Modal Functions ---- */
 let currentAssignmentViewerData = { subjectId: '', assignmentIdx: 0, files: [] };
+let rawTextMode = false;
+let currentCodeContent = '';
 
 async function openAssignmentViewer(subjectId, assignmentIdx, title, entryFile) {
   const modal = document.getElementById('modal-assignment-viewer');
@@ -612,6 +614,10 @@ async function loadCodeFileContent(filename) {
   const codeBlock = document.getElementById('viewer-code-block');
   if (!codeBlock) return;
 
+  rawTextMode = false;
+  const rawBtn = document.getElementById('btn-toggle-raw');
+  if (rawBtn) { rawBtn.textContent = 'Raw Text'; rawBtn.classList.remove('bg-amber-500/20'); rawBtn.classList.add('bg-slate-800'); }
+
   // Highlight active tab
   document.querySelectorAll('.tab-file-btn').forEach(btn => {
     if (btn.textContent.trim() === filename) {
@@ -628,10 +634,41 @@ async function loadCodeFileContent(filename) {
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       codeBlock.textContent = `// Lỗi: ${errData.error || 'Không thể đọc nội dung file'}`;
+      currentCodeContent = '';
       return;
     }
     const data = await res.json();
-    codeBlock.textContent = data.content !== undefined ? data.content : '// File rỗng';
+
+    // Handle binary files (docx, images, pdf)
+    if (data.binary) {
+      currentCodeContent = '';
+      const ext = filename.split('.').pop().toLowerCase();
+      let actionHtml = '';
+      if (ext === 'docx') {
+        actionHtml = `
+          <div style="text-align:center; padding:40px 20px; color:#94a3b8; font-family:system-ui,sans-serif;">
+            <div style="font-size:48px; margin-bottom:16px;">📄</div>
+            <h3 style="color:#f1f5f9; margin-bottom:8px; font-size:16px;">File Word: ${filename}</h3>
+            <p style="font-size:13px; margin-bottom:20px;">File .docx không thể hiển thị dưới dạng code.</p>
+            <a href="${data.url}" download style="display:inline-block; padding:8px 20px; background:#0ea5e9; color:white; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600; margin:4px;">⬇ Tải về .docx</a>
+            <button onclick="openDocxViewer('${data.url}', '${filename.replace(/'/g, "\\'")}')" style="display:inline-block; padding:8px 20px; background:#f59e0b; color:white; border-radius:8px; border:none; cursor:pointer; font-size:13px; font-weight:600; margin:4px;">👁 Xem bằng trình duyệt</button>
+          </div>`;
+      } else {
+        actionHtml = `
+          <div style="text-align:center; padding:40px 20px; color:#94a3b8; font-family:system-ui,sans-serif;">
+            <div style="font-size:48px; margin-bottom:16px;">🖼️</div>
+            <h3 style="color:#f1f5f9; margin-bottom:8px; font-size:16px;">File: ${filename}</h3>
+            <p style="font-size:13px; margin-bottom:20px;">File nhị phân không thể hiển thị dưới dạng code.</p>
+            <a href="${data.url}" download style="display:inline-block; padding:8px 20px; background:#0ea5e9; color:white; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600;">⬇ Tải về</a>
+          </div>`;
+      }
+      codeBlock.innerHTML = actionHtml;
+      codeBlock.className = '';
+      return;
+    }
+
+    currentCodeContent = data.content !== undefined ? data.content : '// File rỗng';
+    codeBlock.textContent = currentCodeContent;
 
     if (window.Prism) {
       const ext = filename.split('.').pop().toLowerCase();
@@ -642,13 +679,40 @@ async function loadCodeFileContent(filename) {
     }
   } catch (e) {
     codeBlock.textContent = '// Lỗi mạng khi kết nối tới máy chủ.';
+    currentCodeContent = '';
+  }
+}
+
+function toggleRawText() {
+  const codeBlock = document.getElementById('viewer-code-block');
+  const rawBtn = document.getElementById('btn-toggle-raw');
+  if (!codeBlock || !currentCodeContent) return;
+
+  rawTextMode = !rawTextMode;
+
+  if (rawTextMode) {
+    codeBlock.className = '';
+    codeBlock.textContent = currentCodeContent;
+    if (rawBtn) { rawBtn.textContent = 'Syntax Highlight'; rawBtn.classList.add('bg-amber-500/20'); rawBtn.classList.remove('bg-slate-800'); }
+  } else {
+    codeBlock.textContent = currentCodeContent;
+    if (window.Prism) {
+      const filename = document.querySelector('.tab-file-btn.font-bold')?.textContent?.trim() || '';
+      const ext = filename.split('.').pop().toLowerCase();
+      let lang = 'php';
+      if (['js', 'json', 'css', 'html'].includes(ext)) lang = ext;
+      codeBlock.className = `language-${lang}`;
+      Prism.highlightElement(codeBlock);
+    }
+    if (rawBtn) { rawBtn.textContent = 'Raw Text'; rawBtn.classList.remove('bg-amber-500/20'); rawBtn.classList.add('bg-slate-800'); }
   }
 }
 
 function copyCurrentCode() {
   const codeBlock = document.getElementById('viewer-code-block');
-  if (codeBlock && codeBlock.textContent) {
-    navigator.clipboard.writeText(codeBlock.textContent);
+  const text = currentCodeContent || (codeBlock && codeBlock.textContent);
+  if (text) {
+    navigator.clipboard.writeText(text);
     showToast('Đã copy mã nguồn!', 'success');
   }
 }

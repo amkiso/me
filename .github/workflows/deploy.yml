@@ -15,9 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Bước 2: Đóng gói mã nguồn (loại bỏ thư mục .git, uploads và src/data để không ghi đè dữ liệu trên server)
+      # Bước 2: Đóng gói mã nguồn (loại bỏ .git, uploads, src/data, api/.env)
       - name: Create archive
-        run: tar -czf deploy.tar.gz --exclude='.git' --exclude='deploy.tar.gz' --exclude='uploads' --exclude='src/data' .
+        run: tar -czf deploy.tar.gz --exclude='.git' --exclude='deploy.tar.gz' --exclude='uploads' --exclude='src/data' --exclude='api/.env' .
 
       # Bước 3: Gửi file đóng gói lên máy chủ EC2
       - name: Copy archive to server
@@ -40,15 +40,32 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             set -e
-            # 1. Di chuyển vào thư mục dự án
             cd ~/my-portfolio
 
-            # 2. Giải nén mã nguồn mới và xóa file nén
+            # 1. Backup dữ liệu quan trọng trước khi giải nén
+            echo "==> Backing up server data..."
+            mkdir -p /tmp/portfolio-backup
+            [ -d src/data ] && cp -r src/data /tmp/portfolio-backup/ || true
+            [ -d uploads ] && cp -r uploads /tmp/portfolio-backup/ || true
+            [ -f api/.env ] && cp api/.env /tmp/portfolio-backup/ || true
+
+            # 2. Giải nén mã nguồn mới
+            echo "==> Extracting new code..."
             tar -xzf deploy.tar.gz
             rm deploy.tar.gz
 
-            # 3. Build lại Docker images và khởi động các container ở chế độ background
+            # 3. Khôi phục dữ liệu đã backup
+            echo "==> Restoring server data..."
+            [ -d /tmp/portfolio-backup/data ] && cp -r /tmp/portfolio-backup/data src/ || true
+            [ -d /tmp/portfolio-backup/uploads ] && cp -r /tmp/portfolio-backup/uploads ./ || true
+            [ -f /tmp/portfolio-backup/.env ] && cp /tmp/portfolio-backup/.env api/ || true
+            rm -rf /tmp/portfolio-backup
+
+            # 4. Build lại Docker images và khởi động containers
+            echo "==> Building and starting Docker containers..."
             docker compose up -d --build
 
-            # 4. Dọn dẹp các Docker image rác
+            # 5. Dọn dẹp Docker image rác
             docker image prune -f
+
+            echo "==> Deploy completed successfully!"

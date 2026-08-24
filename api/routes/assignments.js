@@ -111,7 +111,7 @@ router.get('/:subjectId/:assignmentIdx/files', (req, res) => {
 });
 
 // POST /api/assignments/:subjectId/:assignmentIdx/upload - Upload file (Admin only)
-router.post('/:subjectId/:assignmentIdx/upload', verifyToken, requireAdmin, upload.any(), (req, res) => {
+router.post('/:subjectId/:assignmentIdx/upload', verifyToken, requireAdmin, upload.array('files', 20), (req, res) => {
   const { subjectId, assignmentIdx } = req.params;
   const subjects = readSubjects();
   const subject = subjects.find(s => s.id === subjectId);
@@ -158,6 +158,20 @@ router.post('/:subjectId/:assignmentIdx/upload', verifyToken, requireAdmin, uplo
   });
 });
 
+// Multer error handler
+router.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ error: 'File quá lớn. Giới hạn tối đa 20MB.' });
+    }
+    return res.status(400).json({ error: `Lỗi upload: ${err.message}` });
+  }
+  if (err) {
+    return res.status(400).json({ error: err.message || 'Lỗi không xác định khi upload file.' });
+  }
+  next();
+});
+
 // GET /api/assignments/:subjectId/:assignmentIdx/files/:filename - Get source code
 router.get('/:subjectId/:assignmentIdx/files/:filename', (req, res) => {
   const { subjectId, assignmentIdx, filename } = req.params;
@@ -166,6 +180,17 @@ router.get('/:subjectId/:assignmentIdx/files/:filename', (req, res) => {
 
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'File không tồn tại' });
+  }
+
+  const ext = path.extname(safeFilename).toLowerCase();
+  const binaryExts = ['.docx', '.png', '.jpg', '.jpeg', '.pdf', '.gif', '.webp'];
+
+  if (binaryExts.includes(ext)) {
+    return res.json({
+      filename: safeFilename,
+      binary: true,
+      url: `/uploads/assignments/${subjectId}/${assignmentIdx}/${safeFilename}`
+    });
   }
 
   try {
